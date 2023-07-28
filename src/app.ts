@@ -36,11 +36,15 @@ class MachineRefillEvent implements IEvent {
   constructor(private readonly _refill: number, private readonly _machineId: string) {}
 
   machineId(): string {
-    throw new Error("Method not implemented.");
+    return this._machineId;
+  }
+
+  getRefillQuantity(): number {
+    return this._refill;
   }
 
   type(): string {
-    throw new Error("Method not implemented.");
+    return 'refill';
   }
 }
 
@@ -52,13 +56,49 @@ class MachineSaleSubscriber implements ISubscriber {
   }
 
   handle(event: MachineSaleEvent): void {
-    this.machines[2].stockLevel -= event.getSoldQuantity();
+    const machineId = event.machineId();
+    const machineIndex = this.machines.findIndex(machine => machine.id === machineId);
+
+    this.machines[machineIndex].stockLevel -= event.getSoldQuantity();
+    
+    console.log('sale', this.machines);
   }
 }
 
 class MachineRefillSubscriber implements ISubscriber {
-  handle(event: IEvent): void {
-    throw new Error("Method not implemented.");
+  public machines: Machine[];
+
+  constructor (machines: Machine[]) {
+    this.machines = machines;
+  }
+
+  handle(event: MachineRefillEvent): void {
+    const machineId = event.machineId();
+    const machineIndex = this.machines.findIndex(machine => machine.id === machineId);
+
+    this.machines[machineIndex].stockLevel += event.getRefillQuantity();
+    
+    console.log('refill', this.machines);
+  }
+}
+
+class MachinePublishSubscribeService implements IPublishSubscribeService {
+  private eventSubscriberMap: Map<string, ISubscriber[]>;
+
+  constructor () {
+    this.eventSubscriberMap = new Map<string, ISubscriber[]>();
+  }
+
+  publish(event: IEvent): void {
+    const eventType = event.type();
+    const handlers: ISubscriber[] = this.eventSubscriberMap.get(eventType) ?? [];
+
+    handlers.forEach(handler => handler.handle(event));
+  }
+
+  subscribe(type: string, handler: ISubscriber): void {
+    const handlers: ISubscriber[] = this.eventSubscriberMap.get(type) ?? [];
+    this.eventSubscriberMap.set(type, handlers.concat(handler));
   }
 }
 
@@ -104,13 +144,16 @@ const eventGenerator = (): IEvent => {
 
   // create a machine sale event subscriber. inject the machines (all subscribers should do this)
   const saleSubscriber = new MachineSaleSubscriber(machines);
+  const refillSubscriber = new MachineRefillSubscriber(machines);
 
   // create the PubSub service
-  const pubSubService: IPublishSubscribeService = null as unknown as IPublishSubscribeService; // implement and fix this
+  const pubSubService: MachinePublishSubscribeService = new MachinePublishSubscribeService();
+  pubSubService.subscribe('sale', saleSubscriber);
+  pubSubService.subscribe('refill', refillSubscriber);
 
   // create 5 random events
   const events = [1,2,3,4,5].map(i => eventGenerator());
 
   // publish the events
-  events.map(pubSubService.publish);
+  events.map(event => pubSubService.publish(event));
 })();
