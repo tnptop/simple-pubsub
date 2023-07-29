@@ -1,6 +1,6 @@
 interface IEvent {
-  type(): string;
   machineId(): string;
+  type(): string;
 }
 
 class MachineSaleEvent implements IEvent {

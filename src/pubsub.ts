@@ -7,7 +7,7 @@ interface IPublishSubscribeService {
   unsubscribe(type: string, handler: ISubscriber): void;
 }
 
-class MachinePublishSubscribeService implements IPublishSubscribeService {
+class PublishSubscribeService implements IPublishSubscribeService {
   private eventSubscriberMap: Map<string, ISubscriber[]>;
 
   constructor () {
@@ -38,5 +38,5 @@ class MachinePublishSubscribeService implements IPublishSubscribeService {
 }
 
 export {
-  MachinePublishSubscribeService,
+  PublishSubscribeService,
 }

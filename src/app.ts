@@ -1,6 +1,6 @@
 import { Machine } from './entity';
 import { MachineSaleSubscriber, MachineRefillSubscriber } from './subscriber'
-import { MachinePublishSubscribeService } from './pubsub';
+import { PublishSubscribeService } from './pubsub';
 import { eventGenerator } from './helper';
 
 // program
@@ -13,7 +13,7 @@ import { eventGenerator } from './helper';
   const refillSubscriber: MachineRefillSubscriber = new MachineRefillSubscriber(machines);
 
   // create the PubSub service
-  const pubSubService: MachinePublishSubscribeService = new MachinePublishSubscribeService();
+  const pubSubService: PublishSubscribeService = new PublishSubscribeService();
   pubSubService.subscribe('sale', saleSubscriber);
   pubSubService.subscribe('refill', refillSubscriber);
 
