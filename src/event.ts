@@ -3,10 +3,15 @@ import * as constant from "./constant"
 interface IEvent {
   machineId(): string;
   type(): string;
+  timestamp: number;
 }
 
 class MachineSaleEvent implements IEvent {
-  constructor(private readonly _sold: number, private readonly _machineId: string) { }
+  public timestamp: number;
+
+  constructor(private readonly _sold: number, private readonly _machineId: string) {
+    this.timestamp = Date.now().valueOf();
+  }
 
   machineId(): string {
     return this._machineId;
@@ -22,7 +27,11 @@ class MachineSaleEvent implements IEvent {
 }
 
 class MachineRefillEvent implements IEvent {
-  constructor(private readonly _refill: number, private readonly _machineId: string) { }
+  public timestamp: number;
+
+  constructor(private readonly _refill: number, private readonly _machineId: string) {
+    this.timestamp = Date.now().valueOf()
+  }
 
   machineId(): string {
     return this._machineId;
@@ -38,7 +47,11 @@ class MachineRefillEvent implements IEvent {
 }
 
 class LowStockWarningEvent implements IEvent {
-  constructor(private readonly _machineId: string) { }
+  public timestamp: number;
+
+  constructor(private readonly _machineId: string) {
+    this.timestamp = Date.now().valueOf();
+  }
 
   machineId(): string {
     return this._machineId;
@@ -50,7 +63,11 @@ class LowStockWarningEvent implements IEvent {
 }
 
 class StockLevelOkEvent implements IEvent {
-  constructor(private readonly _machineId: string) { }
+  public timestamp: number;
+
+  constructor(private readonly _machineId: string) {
+    this.timestamp = Date.now().valueOf();
+  }
 
   machineId(): string {
     return this._machineId;

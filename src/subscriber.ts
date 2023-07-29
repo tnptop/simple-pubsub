@@ -48,7 +48,7 @@ class MachineSaleSubscriber extends Subscriber {
 
     console.log("MachineSaleEvent - Subscriber ID:", this._id, ", Machine ID:", machineId, ", sold quantity:", event.getSoldQuantity(), ", old stock level:", oldStockLevel, ", new stock level:", newStockLevel);
 
-    if (newStockLevel < 3) {
+    if (oldStockLevel >= 3 && newStockLevel < 3) {
       this.pubSubService.publish(new LowStockWarningEvent(machineId));
     }
   }
@@ -72,7 +72,7 @@ class MachineRefillSubscriber extends Subscriber {
 
     console.log("MachineRefillEvent - Subscriber ID:", this._id, ", Machine ID:", machineId, ", refill quantity:", event.getRefillQuantity(), ", old stock level:", oldStockLevel, ", new stock level:", newStockLevel);
 
-    if (newStockLevel >= 3) {
+    if (oldStockLevel < 3 && newStockLevel >= 3) {
       this.pubSubService.publish(new StockLevelOkEvent(machineId));
     }
   }
