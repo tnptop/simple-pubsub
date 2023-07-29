@@ -16,19 +16,30 @@ class PublishSubscribeService implements IPublishSubscribeService {
     this.eventSubscriberMap = new Map<string, ISubscriber[]>();
 
     // start eventQueue dispatcher - processing 1 event per second
-    // setInterval(() => this.#execute(), 1000);
+    setInterval(() => this.#execute(), 1000);
   }
 
-  /*
   #execute(): void {
-    this.eventQueues.forEach(this.#executeEventInEventQueue, this);
-  }
+    // get the first event in all queues
+    let eventToBeExecuted: IEvent | undefined;
+    let eventQueueToBeUnqueue: string = '';
+    this.eventQueues.forEach(eventQueue => {
+      const event: IEvent | undefined = eventQueue[0];
 
-  #executeEventInEventQueue(eventQueue: IEvent[]): void {
-    const event: IEvent | undefined = eventQueue.shift();
+      if (event && (!eventToBeExecuted || event.timestamp < eventToBeExecuted.timestamp)) {
+        eventToBeExecuted = event;
+        eventQueueToBeUnqueue = event.type();
+      }
+    }, this);
 
-    if (event) {
+    if (eventToBeExecuted && eventQueueToBeUnqueue) {
+      const event: IEvent = eventToBeExecuted;
+      const eventType = event.type();
+      const eventQueue: IEvent[] = this.eventQueues.get(eventType) ?? [];
       const handlers: ISubscriber[] = this.eventSubscriberMap.get(event.type()) ?? [];
+
+      // unqueue the event to be executed
+      this.eventQueues.set(eventType, eventQueue.slice(1));
       handlers.forEach(handler => handler.handle(event));
     }
   }
@@ -38,13 +49,14 @@ class PublishSubscribeService implements IPublishSubscribeService {
     const eventQueue: IEvent[] = this.eventQueues.get(eventType) ?? [];
     this.eventQueues.set(eventType, eventQueue.concat(event));
   }
-  */
 
+  /*
   // instant event execution
   publish(event: IEvent): void {
     const handlers: ISubscriber[] = this.eventSubscriberMap.get(event.type()) ?? [];
     handlers.forEach(handler => handler.handle(event));
   }
+  */
 
   subscribe(type: string, handler: ISubscriber): void {
     const handlers: ISubscriber[] = this.eventSubscriberMap.get(type) ?? [];
@@ -56,9 +68,11 @@ class PublishSubscribeService implements IPublishSubscribeService {
     const handlerIndex = handlers.findIndex(
       activeHandler => activeHandler.subscriberId() === handler.subscriberId()
     );
-    handlers.splice(handlerIndex, 1);
 
-    this.eventSubscriberMap.set(type, handlers);
+    this.eventSubscriberMap.set(
+      type,
+      handlers.slice(0, handlerIndex).concat(handlers.slice(handlerIndex + 1))
+    );
   }
 }
 
