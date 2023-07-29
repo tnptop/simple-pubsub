@@ -1,5 +1,5 @@
-import { IEvent } from './event';
-import { ISubscriber } from './subscriber';
+import { IEvent } from "./event";
+import { ISubscriber } from "./subscriber";
 
 interface IPublishSubscribeService {
   publish(event: IEvent): void;
@@ -8,17 +8,28 @@ interface IPublishSubscribeService {
 }
 
 class PublishSubscribeService implements IPublishSubscribeService {
+  private eventQueue: IEvent[];
   private eventSubscriberMap: Map<string, ISubscriber[]>;
 
-  constructor () {
+  constructor() {
+    this.eventQueue = [];
     this.eventSubscriberMap = new Map<string, ISubscriber[]>();
+
+    // start eventQueue dispatcher - processing 1 event per second
+    setInterval(() => this.#execute(), 1000);
+  }
+
+  #execute(): void {
+    const event: IEvent | undefined = this.eventQueue.shift();
+
+    if (event) {
+      const handlers: ISubscriber[] = this.eventSubscriberMap.get(event.type()) ?? [];
+      handlers.forEach(handler => handler.handle(event));
+    }
   }
 
   publish(event: IEvent): void {
-    const eventType = event.type();
-    const handlers: ISubscriber[] = this.eventSubscriberMap.get(eventType) ?? [];
-
-    handlers.forEach(handler => handler.handle(event));
+    this.eventQueue.push(event);
   }
 
   subscribe(type: string, handler: ISubscriber): void {

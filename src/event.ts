@@ -1,10 +1,12 @@
+import * as constant from "./constant"
+
 interface IEvent {
   machineId(): string;
   type(): string;
 }
 
 class MachineSaleEvent implements IEvent {
-  constructor(private readonly _sold: number, private readonly _machineId: string) {}
+  constructor(private readonly _sold: number, private readonly _machineId: string) { }
 
   machineId(): string {
     return this._machineId;
@@ -15,12 +17,12 @@ class MachineSaleEvent implements IEvent {
   }
 
   type(): string {
-    return 'sale';
+    return constant.MACHINE_SALE_EVENT;
   }
 }
 
 class MachineRefillEvent implements IEvent {
-  constructor(private readonly _refill: number, private readonly _machineId: string) {}
+  constructor(private readonly _refill: number, private readonly _machineId: string) { }
 
   machineId(): string {
     return this._machineId;
@@ -31,31 +33,31 @@ class MachineRefillEvent implements IEvent {
   }
 
   type(): string {
-    return 'refill';
+    return constant.MACHINE_REFILL_EVENT;
   }
 }
 
 class LowStockWarningEvent implements IEvent {
-  constructor(private readonly _machineId: string) {}
+  constructor(private readonly _machineId: string) { }
 
   machineId(): string {
-      return this._machineId;
+    return this._machineId;
   }
 
   type(): string {
-    return 'low_stock';
+    return constant.LOW_STOCK_WARNING_EVENT;
   }
 }
 
 class StockLevelOkEvent implements IEvent {
-  constructor(private readonly _machineId: string) {}
+  constructor(private readonly _machineId: string) { }
 
   machineId(): string {
-      return this._machineId;
+    return this._machineId;
   }
 
   type(): string {
-    return 'stock_ok';
+    return constant.STOCK_LEVEL_OK_EVENT;
   }
 }
 

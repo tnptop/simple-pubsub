@@ -1,6 +1,13 @@
-import { IEvent, MachineSaleEvent, MachineRefillEvent, LowStockWarningEvent } from './event';
-import { Machine } from './entity';
-import { uuidv4 } from './helper';
+import {
+  IEvent,
+  MachineSaleEvent,
+  MachineRefillEvent,
+  LowStockWarningEvent,
+  StockLevelOkEvent
+} from "./event";
+import { Machine } from "./entity";
+import { uuidv4 } from "./helper";
+import { PublishSubscribeService } from "./pubsub";
 
 interface ISubscriber {
   subscriberId(): string;
@@ -11,7 +18,7 @@ abstract class Subscriber implements ISubscriber {
   public machines: Machine[];
   protected readonly _id: string;
 
-  constructor (machines: Machine[]) {
+  constructor(machines: Machine[]) {
     this._id = uuidv4();
     this.machines = machines;
   }
@@ -24,8 +31,11 @@ abstract class Subscriber implements ISubscriber {
 }
 
 class MachineSaleSubscriber extends Subscriber {
-  constructor (machines: Machine[]) {
+  private pubSubService: PublishSubscribeService;
+
+  constructor(machines: Machine[], pubSubService: PublishSubscribeService) {
     super(machines);
+    this.pubSubService = pubSubService;
   }
 
   handle(event: MachineSaleEvent): void {
@@ -36,13 +46,20 @@ class MachineSaleSubscriber extends Subscriber {
 
     this.machines[machineIndex].stockLevel = newStockLevel;
 
-    console.log('MachineSaleEvent - Subscriber ID:', this._id, ', Machine ID:', machineId, ', sold quantity:', event.getSoldQuantity(), ', old stock level:', oldStockLevel, ', new stock level:', newStockLevel);
+    console.log("MachineSaleEvent - Subscriber ID:", this._id, ", Machine ID:", machineId, ", sold quantity:", event.getSoldQuantity(), ", old stock level:", oldStockLevel, ", new stock level:", newStockLevel);
+
+    if (newStockLevel < 3) {
+      this.pubSubService.publish(new LowStockWarningEvent(machineId));
+    }
   }
 }
 
 class MachineRefillSubscriber extends Subscriber {
-  constructor (machines: Machine[]) {
+  private pubSubService: PublishSubscribeService;
+
+  constructor(machines: Machine[], pubSubService: PublishSubscribeService) {
     super(machines);
+    this.pubSubService = pubSubService;
   }
 
   handle(event: MachineRefillEvent): void {
@@ -53,12 +70,16 @@ class MachineRefillSubscriber extends Subscriber {
 
     this.machines[machineIndex].stockLevel = newStockLevel;
 
-    console.log('MachineRefillEvent - Subscriber ID:', this._id, ', Machine ID:', machineId, ', refill quantity:', event.getRefillQuantity(), ', old stock level:', oldStockLevel, ', new stock level:', newStockLevel);
+    console.log("MachineRefillEvent - Subscriber ID:", this._id, ", Machine ID:", machineId, ", refill quantity:", event.getRefillQuantity(), ", old stock level:", oldStockLevel, ", new stock level:", newStockLevel);
+
+    if (newStockLevel >= 3) {
+      this.pubSubService.publish(new StockLevelOkEvent(machineId));
+    }
   }
 }
 
 class LowStockWarningSubscriber extends Subscriber {
-  constructor (machines: Machine[]) {
+  constructor(machines: Machine[]) {
     super(machines);
   }
 
@@ -67,12 +88,12 @@ class LowStockWarningSubscriber extends Subscriber {
     const machineIndex = this.machines.findIndex(machine => machine.id === machineId);
     const stockLevel = this.machines[machineIndex].stockLevel;
 
-    console.log('LowStockWarningEvent - Subscriber ID:', this._id, ', Machine ID:', machineId, ', stock level:', stockLevel);
+    console.log("LowStockWarningEvent - Subscriber ID:", this._id, ", Machine ID:", machineId, ", stock level:", stockLevel);
   }
 }
 
 class StockLevelOkSubscriber extends Subscriber {
-  constructor (machines: Machine[]) {
+  constructor(machines: Machine[]) {
     super(machines);
   }
 
@@ -80,12 +101,12 @@ class StockLevelOkSubscriber extends Subscriber {
     return this._id;
   }
 
-  handle(event: LowStockWarningEvent): void {
+  handle(event: StockLevelOkEvent): void {
     const machineId = event.machineId();
     const machineIndex = this.machines.findIndex(machine => machine.id === machineId);
     const stockLevel = this.machines[machineIndex].stockLevel;
 
-    console.log('StockLevelOkEvent - Subscriber ID:', this._id, ', Machine ID:', machineId, ', stock level:', stockLevel);
+    console.log("StockLevelOkEvent - Subscriber ID:", this._id, ", Machine ID:", machineId, ", stock level:", stockLevel);
   }
 }
 
